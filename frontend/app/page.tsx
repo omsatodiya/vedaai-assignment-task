@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import {
   FileSearch,
   Search,
@@ -102,6 +103,30 @@ export default function Home() {
     return matchesSearch && matchesStatus;
   });
 
+  // Variants for staggered grid entrance
+  const gridContainerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05
+      }
+    }
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 12 },
+    show: { 
+      opacity: 1, 
+      y: 0, 
+      transition: { 
+        type: "spring" as const, 
+        stiffness: 100, 
+        damping: 15 
+      } 
+    }
+  };
+
   if (loading) {
     return (
       <div className="h-full w-full flex items-center justify-center min-h-100">
@@ -114,33 +139,94 @@ export default function Home() {
     <div className="min-h-full flex flex-col justify-between select-none">
       {assignments.length === 0 ? (
         /* --- EMPTY STATE VIEW --- */
-        <div className="flex-1 flex flex-col items-center justify-center py-20 animate-in fade-in slide-in-from-bottom-5 duration-300">
-          <div className="w-112.5 bg-white rounded-[32px] p-8 border border-[#e5e7eb] flex flex-col items-center text-center shadow-xl shadow-slate-100/50">
+        <div className="flex-1 flex flex-col items-center justify-center py-10 px-4 min-h-[calc(100vh-220px)]">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="w-full max-w-[360px] xs:max-w-[400px] bg-white rounded-[32px] p-6 sm:p-8 border border-[#e5e7eb] flex flex-col items-center text-center shadow-[0_8px_30px_rgb(0,0,0,0.03)]"
+          >
             {/* Visual Magnifier Cross graphic */}
-            <div className="relative w-28 h-28 bg-[#f9fafb] border border-[#f3f4f6] rounded-[24px] flex items-center justify-center mb-6">
-              <FileSearch className="w-14 h-14 text-slate-300 stroke-[1.2]" />
-              <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-rose-500 text-white flex items-center justify-center font-bold border-4 border-white shadow-md text-sm">
-                ✕
-              </div>
-            </div>
+            <motion.div 
+              animate={{ y: [0, -6, 0] }}
+              transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+              className="relative w-48 h-48 flex items-center justify-center mb-4 shrink-0"
+            >
+              <svg viewBox="0 0 200 200" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Background Circle */}
+                <circle cx="100" cy="100" r="54" fill="url(#bg_circle_grad)" />
+                
+                {/* Left Swirl */}
+                <path d="M54 52C42 42 46 32 50 36C56 42 47 50 40 54" stroke="#475569" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+                
+                {/* Sparkle bottom-left */}
+                <path d="M60 102Q65 102 65 97Q65 102 70 102Q65 102 65 107Q65 102 60 102Z" fill="#3b82f6" />
+                
+                {/* Blue dot right */}
+                <circle cx="148" cy="95" r="4" fill="#3b82f6" />
+                
+                {/* Document */}
+                <g filter="url(#doc_shadow)">
+                  <rect x="76" y="52" width="56" height="76" rx="8" fill="white" stroke="#e2e8f0" strokeWidth="1.2" />
+                  {/* Document Header */}
+                  <rect x="84" y="64" width="16" height="4" rx="2" fill="#1e293b" />
+                  {/* Document Lines */}
+                  <rect x="84" y="74" width="40" height="2.5" rx="1.25" fill="#94a3b8" />
+                  <rect x="84" y="82.5" width="40" height="2.5" rx="1.25" fill="#94a3b8" />
+                  <rect x="84" y="91" width="30" height="2.5" rx="1.25" fill="#94a3b8" />
+                </g>
+                
+                {/* Document Badge top-right */}
+                <g filter="url(#doc_shadow)">
+                  <rect x="124" y="44" width="24" height="12" rx="4" fill="white" stroke="#e2e8f0" strokeWidth="0.8" />
+                  <rect x="128" y="48" width="16" height="4" rx="2" fill="#cbd5e1" />
+                </g>
+                
+                {/* Magnifying Glass */}
+                {/* Handle */}
+                <path d="M125 125L150 150" stroke="#cbd5e1" strokeWidth="9" strokeLinecap="round" />
+                <path d="M125 125L150 150" stroke="#94a3b8" strokeWidth="5" strokeLinecap="round" />
+                
+                {/* Lens Frame and Glass */}
+                <circle cx="106" cy="106" r="28" fill="white" fillOpacity="0.4" stroke="#cbd5e1" strokeWidth="8" />
+                <circle cx="106" cy="106" r="28" stroke="#f1f5f9" strokeWidth="4" />
+                
+                {/* Red Cross Badge inside Lens */}
+                <circle cx="106" cy="106" r="16" fill="#ef4444" />
+                <path d="M100 100L112 112M112 100L100 112" stroke="white" strokeWidth="3" strokeLinecap="round" />
+                
+                {/* Gradients & Shadows */}
+                <defs>
+                  <linearGradient id="bg_circle_grad" x1="100" y1="46" x2="100" y2="154" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#f3f4f6" />
+                    <stop offset="1" stopColor="#e5e7eb" />
+                  </linearGradient>
+                  <filter id="doc_shadow" x="72" y="48" width="64" height="88" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                    <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#000" floodOpacity="0.04" />
+                  </filter>
+                </defs>
+              </svg>
+            </motion.div>
 
-            <h2 className="font-bold text-lg text-slate-800 tracking-tight">
+            <h2 className="font-bold text-xl text-slate-800 tracking-tight">
               No assignments yet
             </h2>
-            <p className="text-slate-400 text-xs leading-relaxed max-w-sm mt-3 font-normal">
+            <p className="text-[#7b7b7b] text-xs leading-relaxed max-w-sm mt-3 font-normal">
               Create your first assignment to start collecting and grading
               student submissions. You can set up rubrics, define marking
               criteria, and let AI assist with grading.
             </p>
 
-            <button
+            <motion.button
               onClick={() => router.push("/create")}
-              className="mt-8 bg-[#111827] text-white hover:bg-slate-800 py-3.5 px-6 rounded-full font-semibold text-xs flex items-center gap-2 cursor-pointer transition-all duration-200 active:scale-[0.98] shadow-lg shadow-slate-900/10"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="mt-8 bg-[#111827] text-white hover:bg-slate-800 py-3.5 px-6 rounded-full font-semibold text-xs flex items-center gap-2 cursor-pointer shadow-lg shadow-slate-900/10"
             >
               <Plus className="w-4 h-4" />
               Create Your First Assignment
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
         </div>
       ) : (
         /* --- FILLED STATE GRID VIEW --- */
@@ -181,12 +267,19 @@ export default function Home() {
           </div>
 
           {/* Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-in fade-in duration-300">
+          <motion.div 
+            variants={gridContainerVariants}
+            initial="hidden"
+            animate="show"
+            className="grid grid-cols-1 md:grid-cols-2 gap-5"
+          >
             {filteredAssignments.map((assignment) => (
-              <div
+              <motion.div
                 key={assignment._id}
+                variants={cardVariants}
+                whileHover={{ y: -4, boxShadow: "0 12px 30px rgba(0,0,0,0.03)", borderColor: "#fed7aa" }}
                 onClick={() => router.push(`/assignment/${assignment._id}`)}
-                className="bg-white border border-[#e5e7eb] hover:border-orange-200 hover:shadow-lg hover:shadow-slate-100/80 transition-all duration-300 p-6 rounded-2xl flex flex-col justify-between gap-5 relative cursor-pointer group"
+                className="bg-white border border-[#e5e7eb] hover:border-orange-200 transition-all duration-300 p-6 rounded-2xl flex flex-col justify-between gap-5 relative cursor-pointer group"
               >
                 {/* Card Top */}
                 <div className="flex items-start justify-between gap-4">
@@ -257,19 +350,21 @@ export default function Home() {
                     Due: {formatDate(assignment.dueDate)}
                   </span>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
 
           {/* Center bottom Create Assignment Action */}
           <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-30 sm:left-[calc(50%+130px)]">
-            <button
+            <motion.button
               onClick={() => router.push("/create")}
-              className="bg-[#111827] text-white hover:bg-slate-800 active:scale-95 transition-all duration-200 py-3.5 px-6 rounded-full font-semibold text-xs flex items-center gap-2 shadow-2xl shadow-slate-950/20 cursor-pointer"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="bg-[#111827] text-white hover:bg-slate-800 transition-all duration-200 py-3.5 px-6 rounded-full font-semibold text-xs flex items-center gap-2 shadow-2xl shadow-slate-950/20 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               Create Assignment
-            </button>
+            </motion.button>
           </div>
         </div>
       )}
