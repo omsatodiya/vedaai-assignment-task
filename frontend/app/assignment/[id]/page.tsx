@@ -7,15 +7,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertCircle,
   ArrowLeft,
-  BookOpen,
-  CheckCircle2,
   Clock,
   FileText,
   Loader2,
   Sparkles,
 } from "lucide-react";
 import * as api from "../../../lib/api";
-import type { IAssignment, IQuestion, ISection } from "../../../store/assignmentStore";
+import type { IAssignment } from "../../../store/assignmentStore";
+import PaperEditorView from "../../../components/paper/PaperEditorView";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -26,104 +25,6 @@ const STATUS_LABELS: Record<IAssignment["status"], string> = {
   completed: "Completed",
   failed: "Failed",
 };
-
-function difficultyColor(d: IQuestion["difficulty"]) {
-  return d === "easy"
-    ? "text-emerald-600 bg-emerald-50 border-emerald-100"
-    : d === "medium"
-      ? "text-amber-600 bg-amber-50 border-amber-100"
-      : "text-red-600 bg-red-50 border-red-100";
-}
-
-// ── sub-components ────────────────────────────────────────────────────────────
-
-function QuestionCard({
-  question,
-  index,
-}: {
-  question: IQuestion;
-  index: number;
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.04, type: "spring", stiffness: 160, damping: 20 }}
-      className="bg-white border border-[#e5e7eb] rounded-xl p-4 flex flex-col gap-3"
-    >
-      <div className="flex items-start gap-3">
-        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#f3f4f6] border border-[#e5e7eb] text-[11px] font-bold text-[#6b7280] flex items-center justify-center mt-0.5">
-          {index + 1}
-        </span>
-        <p className="text-sm text-[#111827] leading-relaxed flex-1">
-          {question.question}
-        </p>
-      </div>
-
-      {question.options && question.options.length > 0 && (
-        <div className="ml-9 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-          {question.options.map((opt, i) => (
-            <div
-              key={i}
-              className={`text-sm px-3 py-1.5 rounded-lg border ${
-                opt === question.answer
-                  ? "bg-emerald-50 border-emerald-200 text-emerald-700 font-medium"
-                  : "bg-[#f9fafb] border-[#e5e7eb] text-[#374151]"
-              }`}
-            >
-              <span className="font-semibold text-[#9ca3af] mr-1.5">
-                {String.fromCharCode(65 + i)}.
-              </span>
-              {opt}
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="ml-9 flex items-center gap-2 flex-wrap">
-        <span
-          className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${difficultyColor(question.difficulty)}`}
-        >
-          {question.difficulty}
-        </span>
-        <span className="text-[11px] text-[#6b7280]">
-          {question.marks} {question.marks === 1 ? "mark" : "marks"}
-        </span>
-      </div>
-    </motion.div>
-  );
-}
-
-function SectionBlock({ section, sectionIndex }: { section: ISection; sectionIndex: number }) {
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-xl bg-[#111827] flex items-center justify-center flex-shrink-0">
-          <BookOpen className="w-4 h-4 text-white" />
-        </div>
-        <div>
-          <h3 className="text-sm font-bold text-[#111827]">{section.title}</h3>
-          {section.instruction && (
-            <p className="text-xs text-[#6b7280] mt-0.5">{section.instruction}</p>
-          )}
-        </div>
-        <span className="ml-auto text-[11px] text-[#6b7280] bg-[#f3f4f6] border border-[#e5e7eb] px-2 py-0.5 rounded-full flex-shrink-0">
-          {section.questions.length} Qs
-        </span>
-      </div>
-
-      <div className="flex flex-col gap-2 pl-1">
-        {section.questions.map((q, qi) => (
-          <QuestionCard
-            key={`${sectionIndex}-${qi}`}
-            question={q}
-            index={qi}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function ProgressBar({ progress }: { progress: number }) {
   return (
@@ -237,8 +138,12 @@ export default function AssignmentDetailPage() {
         })
       : null;
 
+  const isCompleted =
+    assignment.status === "completed" && assignment.generatedPaper;
+
   return (
-    <div className="flex flex-col gap-6 max-w-3xl mx-auto">
+    // Widen to full container when showing the split editor
+    <div className={`flex flex-col gap-6 ${isCompleted ? "w-full" : "max-w-3xl mx-auto"}`}>
       {/* Back */}
       <button
         onClick={() => router.push("/")}
@@ -314,26 +219,18 @@ export default function AssignmentDetailPage() {
         </div>
       )}
 
-      {/* Generated paper */}
-      {assignment.status === "completed" && assignment.generatedPaper && (
+      {/* Split editor — completed state */}
+      {isCompleted && (
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 160, damping: 22 }}
-          className="flex flex-col gap-6"
         >
-          <div className="flex items-center gap-2 text-sm text-emerald-700">
-            <CheckCircle2 className="w-4 h-4" />
-            <span className="font-semibold">Paper generated successfully</span>
-          </div>
-
-          {assignment.generatedPaper.sections.map((section, si) => (
-            <SectionBlock key={si} section={section} sectionIndex={si} />
-          ))}
+          <PaperEditorView assignment={assignment} />
         </motion.div>
       )}
 
-      {/* Empty in-progress placeholder */}
+      {/* In-progress placeholder */}
       {inProgress && (
         <div className="flex flex-col items-center gap-3 py-16 text-[#9ca3af]">
           <Sparkles className="w-8 h-8" />
