@@ -24,8 +24,16 @@ export default function PDFPreview(props: PaperPDFProps) {
     );
   }
 
+  // Build a stable key from the ordered list of question IDs.
+  // @react-pdf/renderer's PDFViewer accumulates document content when props
+  // change instead of replacing it — forcing a remount via key fixes that.
+  const pdfKey = props.sections
+    .flatMap((s) => s.questions.map((q) => q.id))
+    .join(",");
+
   return (
     <PDFViewer
+      key={pdfKey}
       width="100%"
       height="780"
       showToolbar

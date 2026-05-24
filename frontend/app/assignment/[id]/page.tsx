@@ -85,8 +85,29 @@ export default function AssignmentDetailPage() {
 
     const socket = io(
       process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000",
+      // Try WebSocket first; fall back to polling if the host blocks upgrades
+      { transports: ["websocket", "polling"] },
     );
     socketRef.current = socket;
+
+    // Re-check status as soon as the socket connects.
+    // On deployed sites the worker can finish before the client connects, so
+    // the progress events are never received — this re-fetch catches that case.
+    socket.on("connect", () => {
+      api
+        .getAssignment(id)
+        .then((data) => {
+          if (data.status === "completed" || data.status === "failed") {
+            setAssignment(data);
+            setProgress(data.status === "completed" ? 100 : 0);
+            setStatusText(
+              data.status === "completed" ? "Completed" : "Failed",
+            );
+            socket.disconnect();
+          }
+        })
+        .catch(() => null);
+    });
 
     socket.on(
       `progress:assignment_${id}`,
@@ -117,6 +138,32 @@ export default function AssignmentDetailPage() {
       socket.disconnect();
     };
   }, [assignment?.status, id]);
+
+  // Polling fallback — catches completed/failed status even when Socket.io
+  // events are missed (race: worker finishes before client connects).
+  // Runs every 3 s while in-progress; stops automatically once done.
+  useEffect(() => {
+    if (!id || !assignment) return;
+    const { status } = assignment;
+    if (status === "completed" || status === "failed") return;
+
+    const timer = setInterval(() => {
+      api
+        .getAssignment(id)
+        .then((data) => {
+          if (data.status === "completed" || data.status === "failed") {
+            setAssignment(data);
+            setProgress(data.status === "completed" ? 100 : 0);
+            setStatusText(
+              data.status === "completed" ? "Completed" : "Failed",
+            );
+          }
+        })
+        .catch(() => null);
+    }, 3000);
+
+    return () => clearInterval(timer);
+  }, [id, assignment?.status]);
 
   // ── Render states ──
 
