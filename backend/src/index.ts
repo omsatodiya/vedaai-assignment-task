@@ -12,7 +12,13 @@ import './workers/generation.worker.js';
 const app = express();
 const httpServer = createServer(app);
 
-app.use(cors({ origin: process.env.CLIENT_URL ?? 'http://localhost:3000' }));
+app.use(cors({
+  origin: [
+    "http://localhost:3000",
+    "https://vedaai-assignment-task.vercel.app",  // ← your actual Vercel URL
+  ],
+  credentials: true,
+}));
 app.use(express.json());
 
 app.use('/api/assignments', assignmentRoutes);

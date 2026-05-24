@@ -5,8 +5,14 @@ let io: Server;
 
 export function initSocket(httpServer: HttpServer): Server {
   io = new Server(httpServer, {
-    cors: { origin: process.env.CLIENT_URL ?? 'http://localhost:3000' },
-  });
+  cors: {
+    origin: [
+      "http://localhost:3000",
+      "https://vedaai-assignment-task.vercel.app",  // ← same URL
+    ],
+    credentials: true,
+  },
+});
   io.on('connection', (socket) => {
     console.log('Socket connected:', socket.id);
   });
