@@ -113,12 +113,12 @@ export default function DraggableSection({
           {section.questions.length} Qs
         </span>
 
-        {/* Edit icon — hidden in overlay */}
+        {/* Edit icon — always visible, highlighted on hover */}
         {!isOverlay && onSectionUpdate && (
           <button
             onClick={openEdit}
-            className="flex-shrink-0 p-1 rounded-md text-[#9ca3af] hover:text-[#111827] hover:bg-[#e5e7eb] transition-colors opacity-0 group-hover:opacity-100"
-            title="Edit section"
+            className="flex-shrink-0 p-1 rounded-md text-[#c4c9d4] hover:text-[#111827] hover:bg-[#e5e7eb] transition-colors"
+            title="Edit section title, sub-heading & instruction"
           >
             <Pencil className="w-3 h-3" />
           </button>
