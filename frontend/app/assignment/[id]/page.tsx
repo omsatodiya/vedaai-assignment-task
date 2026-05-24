@@ -68,27 +68,43 @@ export default function AssignmentDetailPage() {
           setStatusText(STATUS_LABELS[data.status]);
         }
       })
-      .catch(() => setLoadError("Could not load assignment. Is the server running?"));
+      .catch(() =>
+        setLoadError("Could not load assignment. Is the server running?"),
+      );
   }, [id]);
 
   // Socket.io — only connect while still in-progress
   useEffect(() => {
-    if (!assignment || assignment.status === "completed" || assignment.status === "failed") return;
+    if (
+      !assignment ||
+      assignment.status === "completed" ||
+      assignment.status === "failed"
+    )
+      return;
     if (!id) return;
 
-    const socket = io(process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000");
+    const socket = io(
+      process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000",
+    );
     socketRef.current = socket;
 
     socket.on(
       `progress:assignment_${id}`,
-      (payload: { status: IAssignment["status"]; progress: number; statusText: string }) => {
+      (payload: {
+        status: IAssignment["status"];
+        progress: number;
+        statusText: string;
+      }) => {
         setProgress(payload.progress);
         setStatusText(payload.statusText);
 
         if (payload.status === "completed" || payload.status === "failed") {
           socket.disconnect();
           // Re-fetch to get the final paper
-          api.getAssignment(id).then(setAssignment).catch(() => null);
+          api
+            .getAssignment(id)
+            .then(setAssignment)
+            .catch(() => null);
         } else {
           setAssignment((prev) =>
             prev ? { ...prev, status: payload.status } : prev,
@@ -143,16 +159,9 @@ export default function AssignmentDetailPage() {
 
   return (
     // Widen to full container when showing the split editor
-    <div className={`flex flex-col gap-6 ${isCompleted ? "w-full" : "max-w-3xl mx-auto"}`}>
-      {/* Back */}
-      <button
-        onClick={() => router.push("/")}
-        className="cursor-pointer self-start flex items-center gap-1.5 text-sm text-[#6b7280] hover:text-[#111827] transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Back to assignments
-      </button>
-
+    <div
+      className={`flex flex-col gap-6 ${isCompleted ? "w-full" : "max-w-3xl mx-auto"}`}
+    >
       {/* Header card */}
       <div className="bg-[#fafafa] border border-[#e5e7eb] rounded-2xl px-6 py-5 flex flex-col gap-3 shadow-sm">
         <div className="flex items-start gap-3">
@@ -160,10 +169,13 @@ export default function AssignmentDetailPage() {
             <FileText className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-bold text-[#111827] truncate">{assignment.title}</h1>
+            <h1 className="text-lg font-bold text-[#111827] truncate">
+              {assignment.title}
+            </h1>
             <div className="mt-0.5 flex items-center gap-3 flex-wrap text-xs text-[#6b7280]">
               <span>
-                {assignment.totalQuestions} questions · {assignment.totalMarks} marks
+                {assignment.totalQuestions} questions · {assignment.totalMarks}{" "}
+                marks
               </span>
               {formatDate(assignment.dueDate) && (
                 <span className="flex items-center gap-1">

@@ -1,12 +1,22 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
+import dynamic from "next/dynamic";
 import { Eye, PenLine, SlidersHorizontal } from "lucide-react";
 import type { IAssignment } from "../../store/assignmentStore";
-import PaperDocument from "./PaperDocument";
 import EditorPanel from "./EditorPanel";
 import DownloadButton from "./DownloadButton";
 import type { PaperMeta, PaperSection, PaperQuestion } from "./PaperDocument";
+
+// ── Client-only PDF preview (heavy bundle, skips SSR) ─────────────────────────
+const PDFPreview = dynamic(() => import("./PDFPreview"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-[780px] bg-[#f3f4f6] rounded-2xl border border-[#e5e7eb]">
+      <p className="text-sm text-[#9ca3af]">Preparing preview…</p>
+    </div>
+  ),
+});
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -82,8 +92,6 @@ interface PaperEditorViewProps {
 }
 
 export default function PaperEditorView({ assignment }: PaperEditorViewProps) {
-  const docRef = useRef<HTMLDivElement | null>(null);
-
   const [sections, setSections] = useState<PaperSection[]>(() =>
     initSections(assignment),
   );
@@ -96,6 +104,15 @@ export default function PaperEditorView({ assignment }: PaperEditorViewProps) {
 
   const isEmpty = sections.length === 0;
 
+  // Called only when user clicks Download — avoids building the PDF tree on every render
+  const getPDFProps = () => ({
+    title: assignment.title,
+    totalMarks: assignment.totalMarks,
+    meta,
+    sections,
+    showAnswerKey,
+  });
+
   return (
     <div className="flex flex-col gap-4 w-full">
       {/* ── Toolbar ── */}
@@ -107,7 +124,7 @@ export default function PaperEditorView({ assignment }: PaperEditorViewProps) {
         </div>
 
         <DownloadButton
-          docRef={docRef}
+          getPDFProps={getPDFProps}
           fileName={assignment.title}
           empty={isEmpty}
         />
@@ -118,7 +135,7 @@ export default function PaperEditorView({ assignment }: PaperEditorViewProps) {
 
       {/* ── Split layout ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
-        {/* Left — Editor (hidden on mobile when preview tab active) */}
+        {/* Left — Editor */}
         <div
           className={`${
             mobileTab === "edit" ? "flex" : "hidden"
@@ -134,18 +151,17 @@ export default function PaperEditorView({ assignment }: PaperEditorViewProps) {
           />
         </div>
 
-        {/* Right — Preview (hidden on mobile when edit tab active) */}
+        {/* Right — Live PDF preview (real pages, not flat HTML) */}
         <div
           className={`${
             mobileTab === "preview" ? "block" : "hidden"
-          } lg:block rounded-2xl border border-[#e5e7eb] shadow-sm`}
+          } lg:block rounded-2xl overflow-hidden border border-[#e5e7eb] shadow-sm lg:sticky lg:top-6`}
         >
-          <PaperDocument
+          <PDFPreview
             title={assignment.title}
             totalMarks={assignment.totalMarks}
             meta={meta}
             sections={sections}
-            docRef={docRef}
             showAnswerKey={showAnswerKey}
           />
         </div>

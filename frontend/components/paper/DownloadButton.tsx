@@ -2,118 +2,69 @@
 
 import React, { useState } from "react";
 import { Download, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import type { PaperPDFProps } from "./PaperPDF";
 
-type DownloadState = "idle" | "capturing" | "generating" | "saving" | "error";
+type DownloadState = "idle" | "generating" | "saving" | "error";
 
 const STATE_LABEL: Record<DownloadState, string> = {
   idle: "Download as PDF",
-  capturing: "Capturing layout…",
   generating: "Building PDF…",
   saving: "Saving…",
   error: "Failed — retry?",
 };
 
 interface DownloadButtonProps {
-  docRef: React.RefObject<HTMLDivElement | null>;
+  /** Factory called on click — avoids rendering the heavy PDF tree until needed */
+  getPDFProps: () => PaperPDFProps;
   fileName: string;
   /** Disable while paper has no content */
   empty?: boolean;
 }
 
 export default function DownloadButton({
-  docRef,
+  getPDFProps,
   fileName,
   empty = false,
 }: DownloadButtonProps) {
   const [state, setState] = useState<DownloadState>("idle");
   const [successFlash, setSuccessFlash] = useState(false);
 
-  const isLoading =
-    state === "capturing" || state === "generating" || state === "saving";
+  const isLoading = state === "generating" || state === "saving";
 
   const handleDownload = async () => {
-    if (!docRef.current || isLoading || empty) return;
+    if (isLoading || empty) return;
 
-    setState("capturing");
+    setState("generating");
     setSuccessFlash(false);
 
     try {
-      // ── Lazy-load heavy libs so they don't bloat the initial bundle ──
-      // html-to-image: handles modern CSS color functions (oklch, lab, lch)
-      // that html2canvas can't parse — required for Tailwind v4 + shadcn/ui
-      const [{ toJpeg }, { default: jsPDF }] = await Promise.all([
-        import("html-to-image"),
-        import("jspdf"),
+      // Lazy-load to keep the initial bundle lean
+      const [{ pdf }, { PaperPDFDocument }] = await Promise.all([
+        import("@react-pdf/renderer"),
+        import("./PaperPDF"),
       ]);
 
-      // ── Capture via SVG foreignObject — browser renders natively ──
-      const el = docRef.current;
+      const React = await import("react");
+      const docElement = React.createElement(PaperPDFDocument, getPDFProps());
+      const blob = await pdf(docElement).toBlob();
 
-      const imgData = await toJpeg(el, {
-        quality: 0.92,
-        backgroundColor: "#ffffff",
-        pixelRatio: 2, // retina-sharp output
-        width: el.scrollWidth,
-        height: el.scrollHeight,
-        // Strip the visual page-break separator from the captured image
-        filter: (node: Node) => {
-          if (node instanceof HTMLElement) {
-            return node.dataset["pdfHide"] !== "true";
-          }
-          return true;
-        },
-      });
-
-      setState("generating");
-
-      // ── Build PDF in mm (A4 = 210 × 297 mm) ──
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-      });
-
-      const pageW = pdf.internal.pageSize.getWidth(); // 210 mm
-      const pageH = pdf.internal.pageSize.getHeight(); // 297 mm
-
-      // Derive pixel dimensions from the data URL
-      const img = new Image();
-      await new Promise<void>((resolve) => {
-        img.onload = () => resolve();
-        img.src = imgData;
-      });
-      const imgW = img.naturalWidth;
-      const imgH = img.naturalHeight;
-
-      // Scale to fit page width
-      const scale = pageW / imgW;
-      const scaledH = imgH * scale; // total image height in mm
-
-      // ── Multi-page: slice the image across pages ──
-      let remaining = scaledH;
-      let page = 0;
-
-      while (remaining > 0) {
-        if (page > 0) pdf.addPage();
-        // Negative y shifts the image up so the correct slice shows per page
-        pdf.addImage(imgData, "JPEG", 0, -(page * pageH), pageW, scaledH);
-        remaining -= pageH;
-        page++;
-      }
-
-      // ── Save with sanitised filename ──
       setState("saving");
 
+      // Sanitise filename
       const safe = fileName
-        .replace(/[^\w\s-]/g, "") // strip special chars
-        .replace(/\s+/g, "-") // spaces → hyphens
+        .replace(/[^\w\s-]/g, "")
+        .replace(/\s+/g, "-")
         .toLowerCase()
-        .slice(0, 60) // cap length
-        .replace(/^-+|-+$/g, ""); // trim leading/trailing hyphens
+        .slice(0, 60)
+        .replace(/^-+|-+$/g, "");
 
-      pdf.save(`${safe || "assignment"}.pdf`);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${safe || "assignment"}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
 
-      // ── Brief success flash ──
       setSuccessFlash(true);
       setTimeout(() => setSuccessFlash(false), 2500);
     } catch (err) {
