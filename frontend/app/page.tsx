@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
-  FileSearch,
   Search,
   SlidersHorizontal,
   MoreVertical,
@@ -13,9 +12,18 @@ import {
   Trash2,
   ExternalLink,
   Loader2,
+  Check,
 } from "lucide-react";
 import { useAssignmentStore, IAssignment } from "../store/assignmentStore";
 import * as api from "../lib/api";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "../components/ui/dropdown-menu";
 
 export default function Home() {
   const router = useRouter();
@@ -230,40 +238,76 @@ export default function Home() {
         </div>
       ) : (
         /* --- FILLED STATE GRID VIEW --- */
-        <div className="flex flex-col gap-6 flex-1 pb-20">
-          {/* Search and Filters panel */}
-          <div className="flex flex-col sm:flex-row items-center gap-4 bg-white border border-[#e5e7eb] p-4 rounded-2xl shadow-sm">
+        <div className="flex flex-col gap-6 flex-1">
+          {/* Search bar row */}
+          <div className="flex items-center gap-3 bg-white border border-[#e5e7eb] p-3 rounded-2xl shadow-sm">
             {/* Search Input */}
-            <div className="relative flex-1 w-full">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[#9ca3af]" />
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af]" />
               <input
                 type="text"
                 placeholder="Search Assignment"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#f9fafb] border border-[#e5e7eb] focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316] transition-all rounded-xl py-2.5 pl-11 pr-4 text-sm font-medium outline-none placeholder:text-slate-400"
+                className="w-full bg-[#f9fafb] border border-[#e5e7eb] focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316] transition-all rounded-xl py-2.5 pl-10 pr-4 text-sm font-medium outline-none placeholder:text-slate-400"
               />
             </div>
 
-            {/* Filter controls */}
-            <div className="flex items-center gap-3 w-full sm:w-auto shrink-0 select-none">
-              <div className="relative flex items-center border border-[#e5e7eb] bg-[#f9fafb] rounded-xl px-3 py-2 cursor-pointer hover:bg-slate-50 transition-all font-medium text-xs text-[#374151] w-full sm:w-auto gap-2">
-                <SlidersHorizontal className="w-4 h-4 text-[#6b7280]" />
-                <span>Filter Status:</span>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="bg-transparent font-semibold outline-none cursor-pointer text-[#111827] pr-2"
-                >
-                  <option value="all">All Statuses</option>
-                  <option value="queued">Queued</option>
-                  <option value="generating">Generating</option>
-                  <option value="formatting">Formatting</option>
-                  <option value="completed">Completed</option>
-                  <option value="failed">Failed</option>
-                </select>
-              </div>
-            </div>
+            {/* Filter icon button */}
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                className={`relative shrink-0 w-10 h-10 flex items-center justify-center rounded-xl border transition-all cursor-pointer
+                  ${statusFilter !== "all"
+                    ? "border-[#f97316] bg-orange-50 text-[#f97316]"
+                    : "border-[#e5e7eb] bg-[#f9fafb] text-[#6b7280] hover:bg-slate-100"
+                  }`}
+                title="Filter by status"
+              >
+                <SlidersHorizontal className="w-4 h-4" />
+                {statusFilter !== "all" && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#f97316]" />
+                )}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="text-xs text-[#6b7280]">
+                    Filter by status
+                  </DropdownMenuLabel>
+                </DropdownMenuGroup>
+                <div className="h-px bg-[#f3f4f6] my-1" />
+                {[
+                  { value: "all", label: "All Statuses" },
+                  { value: "queued", label: "Queued" },
+                  { value: "generating", label: "Generating" },
+                  { value: "formatting", label: "Formatting" },
+                  { value: "completed", label: "Completed" },
+                  { value: "failed", label: "Failed" },
+                ].map((opt) => (
+                  <DropdownMenuItem
+                    key={opt.value}
+                    onClick={() => setStatusFilter(opt.value)}
+                    className="flex items-center justify-between text-xs cursor-pointer"
+                  >
+                    {opt.label}
+                    {statusFilter === opt.value && (
+                      <Check className="w-3.5 h-3.5 text-[#f97316]" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Create Assignment button */}
+            <motion.button
+              onClick={() => router.push("/create")}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="shrink-0 bg-[#111827] text-white hover:bg-slate-700 transition-colors py-2.5 px-4 rounded-xl font-semibold text-xs flex items-center gap-1.5 cursor-pointer shadow-sm"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Create Assignment</span>
+              <span className="sm:hidden">New</span>
+            </motion.button>
           </div>
 
           {/* Cards Grid */}
@@ -354,18 +398,6 @@ export default function Home() {
             ))}
           </motion.div>
 
-          {/* Center bottom Create Assignment Action */}
-          <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-30 sm:left-[calc(50%+130px)]">
-            <motion.button
-              onClick={() => router.push("/create")}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              className="bg-[#111827] text-white hover:bg-slate-800 transition-all duration-200 py-3.5 px-6 rounded-full font-semibold text-xs flex items-center gap-2 shadow-2xl shadow-slate-950/20 cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              Create Assignment
-            </motion.button>
-          </div>
         </div>
       )}
     </div>
