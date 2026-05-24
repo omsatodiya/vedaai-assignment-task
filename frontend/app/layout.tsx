@@ -23,7 +23,7 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} h-full antialiased`}
     >
-      <body className="h-full bg-[#f4f5f6]">
+      <body className="h-full bg-[#f4f5f6]" suppressHydrationWarning>
         <DashboardLayout>{children}</DashboardLayout>
       </body>
     </html>

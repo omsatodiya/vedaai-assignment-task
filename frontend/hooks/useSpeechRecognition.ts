@@ -58,9 +58,16 @@ export function useSpeechRecognition({
   const [state, setState] = useState<SpeechState>("idle");
   const recognitionRef = useRef<ISpeechRecognition | null>(null);
 
-  const supported =
-    typeof window !== "undefined" &&
-    ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
+  // ── Hydration-safe supported flag ─────────────────────────────────────────
+  // Initialised as false on both server and client so SSR HTML matches the
+  // first client render. useEffect runs only in the browser, after hydration,
+  // so by the time the user can click the mic button the real value is set.
+  const [supported, setSupported] = useState(false);
+  useEffect(() => {
+    setSupported(
+      "SpeechRecognition" in window || "webkitSpeechRecognition" in window,
+    );
+  }, []);
 
   const stop = useCallback(() => {
     recognitionRef.current?.stop();
@@ -76,9 +83,11 @@ export function useSpeechRecognition({
 
     recognition.lang = lang ?? navigator.language ?? "en-US";
     recognition.interimResults = true;
-    recognition.continuous = true; // keep listening through pauses until user stops manually
+    recognition.continuous = true; // keep listening through pauses until user stops
 
     recognition.onstart = () => setState("listening");
+    recognition.onend = () => setState("idle");
+    recognition.onerror = () => setState("idle");
 
     recognition.onresult = (e: SpeechRecognitionEvent) => {
       let interim = "";
@@ -96,9 +105,6 @@ export function useSpeechRecognition({
       if (final) onFinalResult(final.trim());
     };
 
-    recognition.onerror = () => setState("idle");
-    recognition.onend = () => setState("idle");
-
     recognition.start();
     recognitionRef.current = recognition;
   }, [lang, onFinalResult, onInterimResult, state, supported]);
@@ -110,7 +116,9 @@ export function useSpeechRecognition({
 
   // Cleanup on unmount
   useEffect(() => {
-    return () => { recognitionRef.current?.abort(); };
+    return () => {
+      recognitionRef.current?.abort();
+    };
   }, []);
 
   return {
