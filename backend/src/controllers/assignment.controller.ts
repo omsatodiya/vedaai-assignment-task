@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { Assignment } from '../models/Assignment.model.js';
 import { assignmentQueue } from '../lib/queue.js';
+import { regenerateSingleSection } from '../lib/openai.js';
 
 export async function getAssignments(_req: Request, res: Response): Promise<void> {
   const assignments = await Assignment.find().sort({ createdAt: -1 });
@@ -80,6 +81,55 @@ export async function deleteAssignment(req: Request, res: Response): Promise<voi
     return;
   }
   res.status(204).send();
+}
+
+export async function regenerateSection(req: Request, res: Response): Promise<void> {
+  const { id, configIndex: configIndexStr } = req.params as { id: string; configIndex: string };
+  const configIndex = parseInt(configIndexStr, 10);
+
+  if (isNaN(configIndex) || configIndex < 0) {
+    res.status(400).json({ message: 'Invalid section index' });
+    return;
+  }
+
+  const assignment = await Assignment.findById(id);
+  if (!assignment) {
+    res.status(404).json({ message: 'Assignment not found' });
+    return;
+  }
+
+  if (!assignment.generatedPaper) {
+    res.status(400).json({ message: 'Assignment has no generated paper yet' });
+    return;
+  }
+
+  const config = assignment.questionConfigs[configIndex];
+  if (!config) {
+    res.status(400).json({ message: `No question config at index ${configIndex}` });
+    return;
+  }
+
+  // Synchronous OpenAI call — single section, typically ~5-10s
+  const freshSection = await regenerateSingleSection(config, assignment.additionalInfo);
+
+  // Replace only the target section in the paper
+  assignment.generatedPaper.sections[configIndex] = {
+    title: freshSection.title,
+    ...(freshSection.instruction ? { instruction: freshSection.instruction } : {}),
+    questions: freshSection.questions.map((q) => ({
+      question: q.question,
+      difficulty: q.difficulty,
+      marks: q.marks,
+      ...(q.options ? { options: q.options } : {}),
+      ...(q.answer != null ? { answer: q.answer } : {}),
+    })),
+  };
+
+  // markModified tells Mongoose the nested array changed
+  assignment.markModified('generatedPaper');
+  await assignment.save();
+
+  res.json(assignment);
 }
 
 export async function regenerateAssignment(req: Request, res: Response): Promise<void> {

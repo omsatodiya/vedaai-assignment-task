@@ -8,7 +8,7 @@ const QuestionSchema = z.object({
   marks: z.number(),
 });
 
-const SectionSchema = z.object({
+export const SectionSchema = z.object({
   title: z.string(),
   instruction: z.string().optional(),
   questions: z.array(QuestionSchema),

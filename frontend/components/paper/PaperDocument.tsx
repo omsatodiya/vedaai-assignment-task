@@ -27,6 +27,8 @@ export interface PaperSection {
   subtitle?: string;      // e.g. "Short Answer Questions"
   instruction?: string;   // e.g. "Attempt all questions. Each question carries 2 marks"
   questions: PaperQuestion[];
+  /** Original index into assignment.questionConfigs — survives local drag-and-drop reordering */
+  configIndex: number;
 }
 
 export interface PaperDocumentProps {

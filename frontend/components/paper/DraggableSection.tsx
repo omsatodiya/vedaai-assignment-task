@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { BookOpen, GripVertical, Pencil, Check, X } from "lucide-react";
+import { BookOpen, GripVertical, Pencil, RefreshCw, Check, X } from "lucide-react";
 import type { PaperSection } from "./PaperDocument";
 import DraggableQuestion from "./DraggableQuestion";
 
@@ -16,6 +16,8 @@ interface DraggableSectionProps {
   questionOffset: number;
   isOverlay?: boolean;
   onSectionUpdate?: (updates: SectionMetaUpdates) => void;
+  onRegenerate?: () => void;
+  isRegenerating?: boolean;
 }
 
 const inputCls =
@@ -26,6 +28,8 @@ export default function DraggableSection({
   questionOffset,
   isOverlay = false,
   onSectionUpdate,
+  onRegenerate,
+  isRegenerating = false,
 }: DraggableSectionProps) {
   const {
     attributes,
@@ -113,11 +117,24 @@ export default function DraggableSection({
           {section.questions.length} Qs
         </span>
 
+        {/* Regenerate section icon */}
+        {!isOverlay && onRegenerate && (
+          <button
+            onClick={onRegenerate}
+            disabled={isRegenerating}
+            title={isRegenerating ? "Regenerating…" : "Regenerate this section's questions"}
+            className="flex-shrink-0 p-1 rounded-md text-[#c4c9d4] hover:text-[#f97316] hover:bg-orange-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <RefreshCw className={`w-3 h-3 ${isRegenerating ? "animate-spin text-[#f97316]" : ""}`} />
+          </button>
+        )}
+
         {/* Edit icon — always visible, highlighted on hover */}
         {!isOverlay && onSectionUpdate && (
           <button
             onClick={openEdit}
-            className="flex-shrink-0 p-1 rounded-md text-[#c4c9d4] hover:text-[#111827] hover:bg-[#e5e7eb] transition-colors"
+            disabled={isRegenerating}
+            className="flex-shrink-0 p-1 rounded-md text-[#c4c9d4] hover:text-[#111827] hover:bg-[#e5e7eb] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             title="Edit section title, sub-heading & instruction"
           >
             <Pencil className="w-3 h-3" />
@@ -200,7 +217,7 @@ export default function DraggableSection({
       )}
 
       {/* ── Questions ── */}
-      <div className="flex flex-col gap-1.5 pl-3">
+      <div className={`flex flex-col gap-1.5 pl-3 transition-opacity ${isRegenerating ? "opacity-40 pointer-events-none" : ""}`}>
         {isOverlay ? (
           section.questions.length > 0 ? (
             section.questions.map((q, qi) => (

@@ -19,6 +19,7 @@ import {
 } from "@dnd-kit/sortable";
 import { Clock, GraduationCap, Info, School, Tag } from "lucide-react";
 import type { PaperMeta, PaperSection, PaperQuestion } from "./PaperDocument";
+import * as api from "../../lib/api";
 import DraggableSection from "./DraggableSection";
 import DraggableQuestion from "./DraggableQuestion";
 
@@ -50,6 +51,7 @@ const inputCls =
 // ── main component ────────────────────────────────────────────────────────────
 
 interface EditorPanelProps {
+  assignmentId: string;
   meta: PaperMeta;
   onMetaChange: (updates: Partial<PaperMeta>) => void;
   sections: PaperSection[];
@@ -62,6 +64,7 @@ type SectionMetaUpdates = Pick<PaperSection, "title"> &
   Partial<Pick<PaperSection, "subtitle" | "instruction">>;
 
 export default function EditorPanel({
+  assignmentId,
   meta,
   onMetaChange,
   sections,
@@ -70,6 +73,7 @@ export default function EditorPanel({
   onToggleAnswerKey,
 }: EditorPanelProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [regeneratingSectionId, setRegeneratingSectionId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -125,6 +129,41 @@ export default function EditorPanel({
     onSectionsChange(
       sections.map((s) => (s.id === sectionId ? { ...s, ...updates } : s)),
     );
+  };
+
+  // ── section regeneration ──
+  const handleSectionRegenerate = async (section: PaperSection) => {
+    if (regeneratingSectionId) return; // only one at a time
+    setRegeneratingSectionId(section.id);
+    try {
+      const updated = await api.regenerateSection(assignmentId, section.configIndex);
+      // updated is the full assignment — pull out the matching section by configIndex
+      const freshSection = updated.generatedPaper?.sections[section.configIndex];
+      if (!freshSection) return;
+      onSectionsChange(
+        sections.map((s) =>
+          s.id === section.id
+            ? {
+                ...s,
+                title: freshSection.title,
+                instruction: freshSection.instruction,
+                questions: freshSection.questions.map((q, qi) => ({
+                  id: `q-regen-${section.configIndex}-${Date.now()}-${qi}`,
+                  question: q.question,
+                  options: q.options,
+                  answer: q.answer ?? undefined,
+                  difficulty: q.difficulty,
+                  marks: q.marks,
+                })),
+              }
+            : s,
+        ),
+      );
+    } catch {
+      // silently fail — existing questions stay intact
+    } finally {
+      setRegeneratingSectionId(null);
+    }
   };
 
   // ── overlay content ──
@@ -318,6 +357,8 @@ export default function EditorPanel({
                     onSectionUpdate={(updates) =>
                       handleSectionUpdate(section.id, updates)
                     }
+                    onRegenerate={() => handleSectionRegenerate(section)}
+                    isRegenerating={regeneratingSectionId === section.id}
                   />
                 );
               })}

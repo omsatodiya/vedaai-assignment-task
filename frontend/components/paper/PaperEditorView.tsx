@@ -26,6 +26,7 @@ function initSections(assignment: IAssignment): PaperSection[] {
     id: `section-${si}`,
     title: s.title,
     instruction: s.instruction,
+    configIndex: si, // locked to original questionConfigs position — survives local reordering
     questions: s.questions.map(
       (q, qi): PaperQuestion => ({
         id: `q-${si}-${qi}`,
@@ -142,6 +143,7 @@ export default function PaperEditorView({ assignment }: PaperEditorViewProps) {
           } lg:flex flex-col bg-[#fafafa] border border-[#e5e7eb] rounded-2xl shadow-sm`}
         >
           <EditorPanel
+            assignmentId={assignment._id as string}
             meta={meta}
             onMetaChange={handleMetaChange}
             sections={sections}

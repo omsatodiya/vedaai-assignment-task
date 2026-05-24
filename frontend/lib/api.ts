@@ -29,6 +29,11 @@ export const regenerateAssignment = async (id: string): Promise<IAssignment> => 
   return response.data;
 };
 
+export const regenerateSection = async (id: string, configIndex: number): Promise<IAssignment> => {
+  const response = await apiClient.post(`/assignments/${id}/sections/${configIndex}/regenerate`);
+  return response.data;
+};
+
 export const createAssignment = async (
   title: string,
   questionConfigs: any[],
