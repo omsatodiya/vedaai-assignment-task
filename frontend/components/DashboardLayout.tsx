@@ -400,7 +400,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
           {/* --- CONTENT CONTAINER (Mobile/Desktop responsive paddings) --- */}
           <div className="flex-1 pt-[84px] md:pt-[90px] pb-24 md:pb-4 flex flex-col px-0 md:px-0">
-            <div className="flex-1 bg-transparent md:bg-[#fafafa] border-none md:border border-[#e9e9e9] rounded-none md:rounded-[24px] shadow-none md:shadow-sm min-h-[calc(100vh-122px)] p-0 md:p-8">
+            <div className="flex-1 bg-transparent md:border border-none rounded-none md:rounded-[24px] shadow-none min-h-[calc(100vh-122px)] p-0 md:p-8">
               {children}
             </div>
           </div>

@@ -108,13 +108,13 @@ export default function ReviewForm() {
   };
 
   return (
-    <div className="max-w-[760px] mx-auto bg-white border border-[#e5e7eb] rounded-[32px] p-8 shadow-xl shadow-slate-100/50 flex flex-col gap-6 animate-in fade-in duration-300">
+    <div className="max-w-3xl mx-auto bg-white border border-[#e5e7eb] rounded-[28px] p-6 shadow-sm shadow-slate-200/40 flex flex-col gap-5 animate-in fade-in duration-300">
       {/* Title & Subtext */}
       <div className="flex flex-col gap-1 border-b border-[#f3f4f6] pb-4">
-        <h2 className="font-bold text-lg text-slate-800 tracking-tight">
+        <h2 className="font-semibold text-xl text-slate-900 tracking-tight">
           Review & Confirm
         </h2>
-        <p className="text-slate-400 text-xs font-normal">
+        <p className="text-slate-500 text-sm font-normal">
           Review assessment parameters before starting AI generation
         </p>
       </div>
@@ -264,7 +264,7 @@ export default function ReviewForm() {
             variant="outline"
             onClick={handleBack}
             disabled={submitting}
-            className="border-[#e5e7eb] hover:bg-slate-50 py-4 px-6 rounded-full font-semibold text-xs cursor-pointer flex items-center gap-1.5 shadow-sm h-9"
+            className="border-[#e5e7eb] hover:bg-slate-50 py-3 px-5 rounded-full font-semibold text-xs cursor-pointer flex items-center gap-1.5 shadow-sm h-10"
           >
             ← Previous
           </Button>
@@ -275,7 +275,7 @@ export default function ReviewForm() {
             type="button"
             onClick={handleConfirm}
             disabled={submitting}
-            className="bg-[#111827] text-white hover:bg-slate-800 py-4 px-6 rounded-full font-semibold text-xs cursor-pointer flex items-center gap-2 shadow-lg shadow-slate-900/10 h-9"
+            className="bg-[#111827] text-white hover:bg-slate-800 py-3 px-5 rounded-full font-semibold text-xs cursor-pointer flex items-center gap-2 shadow-lg shadow-slate-900/10 h-10"
           >
             {submitting ? (
               <>
