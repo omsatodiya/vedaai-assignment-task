@@ -4,7 +4,6 @@ import React, { useRef, useState } from "react";
 import {
   Upload,
   Calendar as CalendarIcon,
-  Mic,
   X,
   Plus,
   Minus,
@@ -19,6 +18,8 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
+import MicButton from "../ui/MicButton";
+import { useSpeechRecognition } from "../../hooks/useSpeechRecognition";
 import {
   Select,
   SelectContent,
@@ -81,6 +82,29 @@ export default function AssignmentForm() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const [titleError, setTitleError] = useState(false);
+  const [titleInterim, setTitleInterim] = useState("");
+  const [infoInterim, setInfoInterim] = useState("");
+
+  // ── Speech recognition for Title field ────────────────────
+  const titleSpeech = useSpeechRecognition({
+    onFinalResult: (text) => {
+      updateFormDraft({ title: (formDraft.title + " " + text).trimStart() });
+      setTitleInterim("");
+      if (titleError && text.trim()) setTitleError(false);
+    },
+    onInterimResult: setTitleInterim,
+  });
+
+  // ── Speech recognition for Additional Info field ──────────
+  const infoSpeech = useSpeechRecognition({
+    onFinalResult: (text) => {
+      updateFormDraft({
+        additionalInfo: (formDraft.additionalInfo + " " + text).trimStart(),
+      });
+      setInfoInterim("");
+    },
+    onInterimResult: setInfoInterim,
+  });
 
   // ── File handlers ──────────────────────────────────────────
   const handleDrag = (e: React.DragEvent) => {
@@ -188,19 +212,35 @@ export default function AssignmentForm() {
           <label className="text-sm font-medium text-[#111827]">
             Assignment Title <span className="text-red-500">*</span>
           </label>
-          <Input
-            value={formDraft.title}
-            onChange={(e) => {
-              updateFormDraft({ title: e.target.value });
-              if (titleError && e.target.value.trim()) setTitleError(false);
-            }}
-            placeholder="e.g. Biology Midterm Exam"
-            className={`h-10 rounded-lg px-4 text-sm bg-[#f9fafb] border-[#d1d5db] focus-visible:border-[#111827] focus-visible:ring-1 focus-visible:ring-[#11182730] ${
-              titleError
-                ? "border-red-400 focus-visible:border-red-400 focus-visible:ring-red-200"
-                : ""
-            }`}
-          />
+          <div className="relative flex items-center">
+            <Input
+              value={
+                titleSpeech.listening && titleInterim
+                  ? formDraft.title + (formDraft.title ? " " : "") + titleInterim
+                  : formDraft.title
+              }
+              onChange={(e) => {
+                updateFormDraft({ title: e.target.value });
+                if (titleError && e.target.value.trim()) setTitleError(false);
+              }}
+              placeholder={
+                titleSpeech.listening ? "Listening…" : "e.g. Biology Midterm Exam"
+              }
+              className={`h-10 rounded-lg pl-4 pr-11 text-sm bg-[#f9fafb] border-[#d1d5db] focus-visible:border-[#111827] focus-visible:ring-1 focus-visible:ring-[#11182730] ${
+                titleError
+                  ? "border-red-400 focus-visible:border-red-400 focus-visible:ring-red-200"
+                  : ""
+              } ${titleSpeech.listening ? "border-red-300 focus-visible:border-red-400" : ""}`}
+            />
+            <div className="absolute right-2">
+              <MicButton
+                size="sm"
+                listening={titleSpeech.listening}
+                supported={titleSpeech.supported}
+                onToggle={titleSpeech.toggle}
+              />
+            </div>
+          </div>
           {titleError && (
             <div className="flex items-center gap-1.5 text-xs text-red-500">
               <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
@@ -496,19 +536,32 @@ export default function AssignmentForm() {
           </label>
           <div className="relative">
             <Textarea
-              placeholder="e.g Generate a question paper for 3 hour exam duration..."
-              value={formDraft.additionalInfo}
+              placeholder={
+                infoSpeech.listening
+                  ? "Listening…"
+                  : "e.g Generate a question paper for 3 hour exam duration..."
+              }
+              value={
+                infoSpeech.listening && infoInterim
+                  ? formDraft.additionalInfo +
+                    (formDraft.additionalInfo ? " " : "") +
+                    infoInterim
+                  : formDraft.additionalInfo
+              }
               onChange={(e) =>
                 updateFormDraft({ additionalInfo: e.target.value })
               }
-              className="min-h-[120px] rounded-xl border-[#d1d5db] bg-[#f9fafb] px-4 py-3 pr-12 text-sm resize-none focus-visible:ring-1 focus-visible:ring-[#f97316] focus-visible:border-[#f97316]"
+              className={`min-h-[120px] rounded-xl border-[#d1d5db] bg-[#f9fafb] px-4 py-3 pr-12 text-sm resize-none focus-visible:ring-1 focus-visible:ring-[#f97316] focus-visible:border-[#f97316] ${
+                infoSpeech.listening ? "border-red-300" : ""
+              }`}
             />
-            <button
-              type="button"
-              className="cursor-pointer absolute right-3 bottom-3 w-8 h-8 rounded-full bg-[#ebebeb] flex items-center justify-center text-[#6b7280] hover:bg-[#e0e0e0] transition-colors"
-            >
-              <Mic className="w-4 h-4" />
-            </button>
+            <div className="absolute right-3 bottom-3">
+              <MicButton
+                listening={infoSpeech.listening}
+                supported={infoSpeech.supported}
+                onToggle={infoSpeech.toggle}
+              />
+            </div>
           </div>
         </div>
       </div>
