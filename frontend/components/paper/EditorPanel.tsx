@@ -58,6 +58,9 @@ interface EditorPanelProps {
   onToggleAnswerKey: (val: boolean) => void;
 }
 
+type SectionMetaUpdates = Pick<PaperSection, "title"> &
+  Partial<Pick<PaperSection, "subtitle" | "instruction">>;
+
 export default function EditorPanel({
   meta,
   onMetaChange,
@@ -117,6 +120,13 @@ export default function EditorPanel({
 
   const handleDragCancel = () => setActiveId(null);
 
+  // ── section metadata edit ──
+  const handleSectionUpdate = (sectionId: string, updates: SectionMetaUpdates) => {
+    onSectionsChange(
+      sections.map((s) => (s.id === sectionId ? { ...s, ...updates } : s)),
+    );
+  };
+
   // ── overlay content ──
 
   const activeSection = activeId
@@ -175,7 +185,7 @@ export default function EditorPanel({
             </div>
 
             {/* Subject + Class row */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <FieldLabel
                   icon={<Tag className="w-3.5 h-3.5" />}
@@ -305,6 +315,9 @@ export default function EditorPanel({
                     key={section.id}
                     section={section}
                     questionOffset={offset}
+                    onSectionUpdate={(updates) =>
+                      handleSectionUpdate(section.id, updates)
+                    }
                   />
                 );
               })}

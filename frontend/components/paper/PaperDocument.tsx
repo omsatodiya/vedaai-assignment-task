@@ -24,7 +24,8 @@ export interface PaperQuestion {
 export interface PaperSection {
   id: string;
   title: string;
-  instruction?: string;
+  subtitle?: string;      // e.g. "Short Answer Questions"
+  instruction?: string;   // e.g. "Attempt all questions. Each question carries 2 marks"
   questions: PaperQuestion[];
 }
 
@@ -81,24 +82,24 @@ export default function PaperDocument({
       {/* A4-ish paper sheet */}
       <div
         ref={docRef}
-        className="bg-white mx-auto shadow-md rounded-lg px-4 sm:px-8 py-4 sm:py-6 text-[#111827]"
+        className="bg-white mx-auto shadow-md rounded-lg px-4 sm:px-10 py-6 sm:py-8 text-[#111827]"
         style={{ maxWidth: 760, fontFamily: "Georgia, 'Times New Roman', serif" }}
       >
         {/* ── Header ── */}
         <div className="text-center flex flex-col gap-0.5">
           {meta.schoolName && (
-            <p className="text-[11px] font-bold tracking-wide uppercase">
+            <p className="text-sm font-bold tracking-wide uppercase">
               {meta.schoolName}
             </p>
           )}
-          <p className="text-[10px] font-bold">{title}</p>
+          <p className="text-[13px] font-bold">{title}</p>
           {meta.subject && (
-            <p className="text-[10px]">
+            <p className="text-[11px]">
               <span className="font-semibold">Subject:</span> {meta.subject}
             </p>
           )}
           {meta.classStandard && (
-            <p className="text-[10px]">
+            <p className="text-[11px]">
               <span className="font-semibold">Class:</span> {meta.classStandard}
             </p>
           )}
@@ -108,7 +109,7 @@ export default function PaperDocument({
 
         {/* ── Meta row ── */}
         {(meta.duration || totalMarks) && (
-          <div className="flex items-center justify-between text-[10px]">
+          <div className="flex items-center justify-between text-[11px]">
             {meta.duration ? (
               <span>
                 <span className="font-semibold">Time Allowed:</span>{" "}
@@ -125,7 +126,7 @@ export default function PaperDocument({
 
         {/* ── Instructions ── */}
         {meta.instructions && (
-          <p className="mt-2 text-[10px] text-[#374151]">{meta.instructions}</p>
+          <p className="mt-2 text-[11px] text-[#374151]">{meta.instructions}</p>
         )}
 
         {/* ── Student fields ── */}
@@ -139,19 +140,27 @@ export default function PaperDocument({
 
         {/* ── Sections ── */}
         {sections.map((section, si) => {
-          // track per-section question numbering offset
           const offset = sections
             .slice(0, si)
             .reduce((acc, s) => acc + s.questions.length, 0);
 
           return (
             <div key={section.id} className="mt-6">
-              {/* Section heading */}
-              <h2 className="text-center text-[10px] font-bold uppercase tracking-widest mb-1">
+              {/* Section title — centered, bold */}
+              <h2 className="text-center text-[13px] font-bold mb-1">
                 {section.title}
               </h2>
+
+              {/* Subtitle — left-aligned, bold (e.g. "Short Answer Questions") */}
+              {section.subtitle && (
+                <p className="text-[11px] font-bold mt-1">
+                  {section.subtitle}
+                </p>
+              )}
+
+              {/* Instruction — italic (e.g. "Attempt all questions…") */}
               {section.instruction && (
-                <p className="text-center text-[10px] italic text-[#6b7280] mb-2">
+                <p className="text-[10px] italic text-[#374151] mb-3">
                   {section.instruction}
                 </p>
               )}
@@ -163,11 +172,11 @@ export default function PaperDocument({
                   return (
                     <li key={q.id} className="flex flex-col gap-1.5">
                       {/* Question text */}
-                      <div className="flex gap-2 text-[10px]">
+                      <div className="flex gap-2 text-[11px]">
                         <span className="font-semibold shrink-0">{num}.</span>
                         <span className="flex-1 leading-relaxed">
                           {q.question}
-                          <span className="ml-2 text-[9px] text-[#6b7280] not-italic">
+                          <span className="ml-2 text-[10px] text-[#6b7280] not-italic">
                             [{q.marks} {q.marks === 1 ? "Mark" : "Marks"}]
                           </span>
                         </span>
@@ -193,7 +202,7 @@ export default function PaperDocument({
         })}
 
         {/* ── End of paper ── */}
-        <p className="mt-6 text-[10px] font-bold text-center">
+        <p className="mt-8 text-[11px] font-bold text-center">
           — End of Question Paper —
         </p>
 
@@ -209,10 +218,10 @@ export default function PaperDocument({
               <div className="flex-1 border-t-2 border-dashed border-[#e5e7eb]" />
             </div>
 
-            <h2 className="text-[10px] font-bold mb-2">Answer Key:</h2>
+            <h2 className="text-[11px] font-bold mb-2">Answer Key:</h2>
             <ol className="flex flex-col gap-1" style={{ listStyleType: "none" }}>
               {answerKeyItems.map(({ num, answer }) => (
-                <li key={num} className="flex gap-2 text-[10px]">
+                <li key={num} className="flex gap-2 text-[11px]">
                   <span className="font-semibold shrink-0">{num}.</span>
                   <span className="text-[#374151]">{answer}</span>
                 </li>
