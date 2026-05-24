@@ -81,3 +81,22 @@ export async function deleteAssignment(req: Request, res: Response): Promise<voi
   }
   res.status(204).send();
 }
+
+export async function regenerateAssignment(req: Request, res: Response): Promise<void> {
+  const assignment = await Assignment.findById(req.params['id']);
+  if (!assignment) {
+    res.status(404).json({ message: 'Assignment not found' });
+    return;
+  }
+
+  // Reset to queued state and wipe the previous paper
+  assignment.status = 'queued';
+  assignment.generatedPaper = undefined;
+  assignment.errorDetails = undefined;
+  await assignment.save();
+
+  // Re-enqueue the same job — worker picks up assignmentId and regenerates
+  await assignmentQueue.add('generate', { assignmentId: assignment._id.toString() });
+
+  res.status(202).json(assignment);
+}

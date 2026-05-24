@@ -10,6 +10,7 @@ import {
   Clock,
   FileText,
   Loader2,
+  RefreshCw,
   Sparkles,
 } from "lucide-react";
 import * as api from "../../../lib/api";
@@ -48,8 +49,25 @@ export default function AssignmentDetailPage() {
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState("Loading…");
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [regenerating, setRegenerating] = useState(false);
 
   const socketRef = useRef<Socket | null>(null);
+
+  const handleRegenerate = async () => {
+    if (!id || regenerating) return;
+    try {
+      setRegenerating(true);
+      const updated = await api.regenerateAssignment(id);
+      // Reset progress UI — the Socket.io effect re-fires when status changes
+      setProgress(0);
+      setStatusText("Queued");
+      setAssignment(updated);
+    } catch {
+      // surface nothing — if it fails the existing paper stays visible
+    } finally {
+      setRegenerating(false);
+    }
+  };
 
   // Initial fetch
   useEffect(() => {
@@ -244,6 +262,22 @@ export default function AssignmentDetailPage() {
           >
             {assignment.status}
           </span>
+
+          {/* Regenerate — only shown once generation is settled */}
+          {(assignment.status === "completed" ||
+            assignment.status === "failed") && (
+            <button
+              onClick={handleRegenerate}
+              disabled={regenerating}
+              title="Regenerate question paper"
+              className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold text-[#6b7280] border border-[#e5e7eb] bg-white hover:bg-[#f3f4f6] hover:text-[#111827] active:scale-[0.97] px-3 py-1.5 rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <RefreshCw
+                className={`w-3.5 h-3.5 ${regenerating ? "animate-spin" : ""}`}
+              />
+              {regenerating ? "Queuing…" : "Regenerate"}
+            </button>
+          )}
         </div>
 
         {/* Progress */}

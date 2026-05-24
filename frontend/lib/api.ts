@@ -24,6 +24,11 @@ export const deleteAssignment = async (id: string): Promise<void> => {
   await apiClient.delete(`/assignments/${id}`);
 };
 
+export const regenerateAssignment = async (id: string): Promise<IAssignment> => {
+  const response = await apiClient.post(`/assignments/${id}/regenerate`);
+  return response.data;
+};
+
 export const createAssignment = async (
   title: string,
   questionConfigs: any[],
