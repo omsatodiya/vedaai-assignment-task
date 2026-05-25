@@ -4,6 +4,32 @@ A full-stack AI-powered assessment creator that lets teachers generate structure
 
 ---
 
+# Images of the Website
+
+## Dashboard
+
+![Dashboard](./frontend/public/assignment-dashboard.png)
+
+---
+
+## Assignment Creation
+
+![Assignment Creation](./frontend/public/create-assignment.png)
+
+---
+
+## Generated Question Paper
+
+![Generated Question Paper](./frontend/public/view-edit-assignment.png)
+
+---
+
+# NOTE
+
+⚠️ Note: Since the backend is hosted on Render’s free tier, the first request after prolonged inactivity may take approximately 30–40 seconds as the server wakes up.
+
+---
+
 ## System Architecture
 
 Rather than calling OpenAI directly from a request handler, generation is delegated to a background worker so the HTTP layer stays fast and the UI receives live progress updates.

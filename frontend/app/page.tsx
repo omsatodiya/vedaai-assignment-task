@@ -137,8 +137,18 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="h-full w-full flex items-center justify-center min-h-100">
+      <div className="h-full w-full flex flex-col items-center justify-center gap-5 min-h-[60vh]">
         <Loader2 className="w-8 h-8 text-[#f97316] animate-spin" />
+        <div className="flex flex-col items-center gap-1.5 text-center max-w-xs">
+          <p className="text-sm font-medium text-[#374151]">
+            Loading assignments…
+          </p>
+          <p className="text-xs text-[#9ca3af] leading-relaxed">
+            The backend is hosted on Render's free tier. If this is the first
+            request after a period of inactivity, it may take up to 40 seconds
+            to wake up.
+          </p>
+        </div>
       </div>
     );
   }

@@ -9,8 +9,34 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "VedaAI – AI Assessment Creator",
-  description: "Generate structured, professional exam papers in seconds with AI",
+  title: {
+    default: "VedaAI – AI Assessment Creator",
+    template: "%s | VedaAI",
+  },
+  description:
+    "Generate structured, professional exam papers in seconds with AI. Powered by GPT-4, real-time WebSocket progress, and a fully editable output editor.",
+  keywords: [
+    "AI assessment",
+    "exam paper generator",
+    "question paper",
+    "EdTech",
+    "teacher tools",
+    "AI grading",
+  ],
+  authors: [{ name: "VedaAI", url: "https://myvedaai.com" }],
+  openGraph: {
+    title: "VedaAI – AI Assessment Creator",
+    description:
+      "Generate structured, professional exam papers in seconds with AI.",
+    type: "website",
+    siteName: "VedaAI",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "VedaAI – AI Assessment Creator",
+    description:
+      "Generate structured, professional exam papers in seconds with AI.",
+  },
 };
 
 export default function RootLayout({
